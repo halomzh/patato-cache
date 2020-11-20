@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  halo.mzh.cache.starter.caffeine.config.CaffeineCacheConfig
