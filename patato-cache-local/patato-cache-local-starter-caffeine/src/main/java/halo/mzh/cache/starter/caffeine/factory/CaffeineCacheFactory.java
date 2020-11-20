@@ -1,7 +1,11 @@
 package halo.mzh.cache.starter.caffeine.factory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.benmanes.caffeine.cache.*;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import halo.mzh.cache.caffeine.CaffeineCacheLoader;
+import halo.mzh.cache.caffeine.CaffeineRemovalListener;
 import halo.mzh.cache.serializer.support.KryoSerializerSupport;
 import halo.mzh.cache.starter.caffeine.config.properties.CaffeineCacheProperties;
 import halo.mzh.cache.starter.caffeine.generator.CaffeineKeyGenerator;
@@ -11,6 +15,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -34,13 +39,23 @@ public class CaffeineCacheFactory {
 
     public Cache<String, byte[]> generateDefaultCache() {
 
-        return Caffeine.newBuilder()
-                .expireAfterAccess(caffeineCacheProperties.getExpireAfterAccess(), TimeUnit.SECONDS)
-                .expireAfterWrite(caffeineCacheProperties.getExpireAfterWrite(), TimeUnit.SECONDS)
+        @NonNull Caffeine<Object, Object> builder = Caffeine.newBuilder();
+
+        if (caffeineCacheProperties.getExpireAfterAccess() > 0) {
+            builder.expireAfterAccess(caffeineCacheProperties.getExpireAfterAccess(), TimeUnit.SECONDS);
+        }
+
+        if (caffeineCacheProperties.getExpireAfterWrite() > 0) {
+            builder.expireAfterWrite(caffeineCacheProperties.getExpireAfterWrite(), TimeUnit.SECONDS);
+        }
+
+        return builder
+                .maximumSize(caffeineCacheProperties.getMaximumSize())
                 .refreshAfterWrite(caffeineCacheProperties.getRefreshAfterWrite(), TimeUnit.SECONDS)
-                .removalListener(new RemovalListener<String, byte[]>() {
+                .removalListener(new CaffeineRemovalListener<String, byte[]>() {
                     @SneakyThrows
                     @Override
+                    @Async
                     public void onRemoval(@Nullable String key, byte @Nullable [] bytes, @NonNull RemovalCause removalCause) {
                         if (removalCause.name().equalsIgnoreCase(RemovalCause.EXPIRED.name()) || removalCause.name().equalsIgnoreCase(RemovalCause.EXPLICIT.name())) {
                             caffeineKeyGenerator.getCacheKeyInvokeParamMap().remove(key);
@@ -49,7 +64,7 @@ public class CaffeineCacheFactory {
                         Object value = KryoSerializerSupport.instance().decode(bytes);
                         log.info("缓存: {},值: {}, 被移除: {}", key, value, removalCause);
                     }
-                }).build(new CacheLoader<String, byte[]>() {
+                }).build(new CaffeineCacheLoader<String, byte[]>() {
                     @Override
                     public byte @Nullable [] load(@NonNull String key) throws Exception {
                         CaffeineKeyGenerator.InvokeParam invokeParam = caffeineKeyGenerator.getCacheKeyInvokeParamMap().get(key);
@@ -61,6 +76,13 @@ public class CaffeineCacheFactory {
                         Object[] args = invokeParam.getArgs();
                         Object result = objMethod.invoke(obj, args);
                         return KryoSerializerSupport.instance().encode(result);
+                    }
+
+                    @Override
+                    public byte @Nullable [] reload(@NonNull String key, byte @NonNull [] oldValue) throws Exception {
+                        byte[] newValue = load(key);
+                        log.info("刷新key: {}, 旧值: {}, 新值: {}", key, KryoSerializerSupport.instance().decode(oldValue), KryoSerializerSupport.instance().decode(newValue));
+                        return newValue;
                     }
                 });
 

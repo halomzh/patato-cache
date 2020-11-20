@@ -1,11 +1,11 @@
 package halo.mzh.cache.caffeine;
 
-import java.util.function.Function;
+import com.github.benmanes.caffeine.cache.CacheLoader;
 
 /**
  * @author shoufeng
  */
 
 @FunctionalInterface
-public interface CaffeineCacheLoader<K, V> extends Function<K, V> {
+public interface CaffeineCacheLoader<K, V> extends CacheLoader<K, V> {
 }

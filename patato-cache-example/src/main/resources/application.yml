@@ -1,4 +1,4 @@
 pcaffeine:
   enable: true
-  refresh-after-write: 10
+  refresh-after-write: 30
   expire-after-access: 60
