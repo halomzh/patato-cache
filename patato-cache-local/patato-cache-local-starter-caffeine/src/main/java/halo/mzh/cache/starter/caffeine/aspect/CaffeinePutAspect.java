@@ -1,9 +1,10 @@
 package halo.mzh.cache.starter.caffeine.aspect;
 
+import halo.mzh.cache.spring.support.generator.SpringCacheKeyGenerateSupport;
 import halo.mzh.cache.starter.caffeine.annotation.CaffeinePut;
+import halo.mzh.cache.starter.caffeine.config.properties.CaffeineCacheProperties;
 import halo.mzh.cache.starter.caffeine.event.CaffeinePutEvent;
 import halo.mzh.cache.starter.caffeine.event.CaffeinePutEventInfo;
-import halo.mzh.cache.starter.caffeine.generator.CaffeineKeyGenerator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -32,7 +33,7 @@ public class CaffeinePutAspect implements ApplicationContextAware {
     private ApplicationContext applicationContext;
 
     @Autowired
-    private CaffeineKeyGenerator caffeineKeyGenerator;
+    private SpringCacheKeyGenerateSupport springCacheKeyGenerateSupport;
 
     @Pointcut("@annotation(halo.mzh.cache.starter.caffeine.annotation.CaffeinePut)")
     public void caffeinePutPointcut() {
@@ -53,7 +54,7 @@ public class CaffeinePutAspect implements ApplicationContextAware {
         String nameSpace = caffeinePut.nameSpace();
         String name = caffeinePut.name();
 
-        String key = caffeineKeyGenerator.generateKey(nameSpace, name, point);
+        String key = springCacheKeyGenerateSupport.generateKey(CaffeineCacheProperties.PREFIX, nameSpace, name, point);
 
         CaffeinePutEvent caffeinePutEvent = new CaffeinePutEvent(new CaffeinePutEventInfo(nameSpace, name, key, value));
         applicationContext.publishEvent(caffeinePutEvent);
@@ -65,5 +66,5 @@ public class CaffeinePutAspect implements ApplicationContextAware {
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-    
+
 }

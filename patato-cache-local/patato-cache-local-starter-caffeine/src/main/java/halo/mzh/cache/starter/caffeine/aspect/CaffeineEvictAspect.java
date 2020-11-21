@@ -1,9 +1,10 @@
 package halo.mzh.cache.starter.caffeine.aspect;
 
+import halo.mzh.cache.spring.support.generator.SpringCacheKeyGenerateSupport;
 import halo.mzh.cache.starter.caffeine.annotation.CaffeineEvict;
+import halo.mzh.cache.starter.caffeine.config.properties.CaffeineCacheProperties;
 import halo.mzh.cache.starter.caffeine.event.CaffeineEvictEvent;
 import halo.mzh.cache.starter.caffeine.event.CaffeineEvictEventInfo;
-import halo.mzh.cache.starter.caffeine.generator.CaffeineKeyGenerator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -32,7 +33,7 @@ public class CaffeineEvictAspect implements ApplicationContextAware {
     private ApplicationContext applicationContext;
 
     @Autowired
-    private CaffeineKeyGenerator caffeineKeyGenerator;
+    private SpringCacheKeyGenerateSupport springCacheKeyGenerateSupport;
 
     @Pointcut("@annotation(halo.mzh.cache.starter.caffeine.annotation.CaffeineEvict)")
     public void caffeineEvictPointcut() {
@@ -53,7 +54,7 @@ public class CaffeineEvictAspect implements ApplicationContextAware {
         String[] names = caffeineEvict.names();
 
         for (String name : names) {
-            String key = caffeineKeyGenerator.generateKey(nameSpace, name, point);
+            String key = springCacheKeyGenerateSupport.generateKey(CaffeineCacheProperties.PREFIX, nameSpace, name, point);
             CaffeineEvictEvent caffeineEvictEvent = new CaffeineEvictEvent(new CaffeineEvictEventInfo(nameSpace, name, key));
             applicationContext.publishEvent(caffeineEvictEvent);
         }

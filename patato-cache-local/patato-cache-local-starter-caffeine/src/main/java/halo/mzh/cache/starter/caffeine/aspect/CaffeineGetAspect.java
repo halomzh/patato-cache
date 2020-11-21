@@ -2,9 +2,10 @@ package halo.mzh.cache.starter.caffeine.aspect;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import halo.mzh.cache.serializer.support.KryoSerializerSupport;
+import halo.mzh.cache.spring.support.generator.SpringCacheKeyGenerateSupport;
 import halo.mzh.cache.starter.caffeine.annotation.CaffeineGet;
+import halo.mzh.cache.starter.caffeine.config.properties.CaffeineCacheProperties;
 import halo.mzh.cache.starter.caffeine.factory.CaffeineCacheFactory;
-import halo.mzh.cache.starter.caffeine.generator.CaffeineKeyGenerator;
 import halo.mzh.cache.starter.caffeine.holder.CaffeineCacheHolder;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -35,7 +36,7 @@ public class CaffeineGetAspect {
     private CaffeineCacheHolder caffeineCacheHolder;
 
     @Autowired
-    private CaffeineKeyGenerator caffeineKeyGenerator;
+    private SpringCacheKeyGenerateSupport springCacheKeyGenerateSupport;
 
     @Autowired
     private CaffeineCacheFactory caffeineCacheFactory;
@@ -58,7 +59,7 @@ public class CaffeineGetAspect {
         String nameSpace = caffeineGet.nameSpace();
         String name = caffeineGet.name();
 
-        String key = caffeineKeyGenerator.generateKey(nameSpace, name, point);
+        String key = springCacheKeyGenerateSupport.generateKey(CaffeineCacheProperties.PREFIX, nameSpace, name, point);
 
         Cache<String, byte[]> cache = caffeineCacheHolder.getNameSpaceCacheMap().get(nameSpace);
         if (ObjectUtils.isEmpty(cache)) {

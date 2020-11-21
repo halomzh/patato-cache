@@ -1,4 +1,4 @@
-package halo.mzh.cache.starter.caffeine.generator;
+package halo.mzh.cache.spring.support.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 @Slf4j
 @Component
-public class CaffeineKeyGenerator {
+public class SpringCacheKeyGenerateSupport {
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -42,10 +42,9 @@ public class CaffeineKeyGenerator {
      */
     private DefaultParameterNameDiscoverer nameDiscoverer = new DefaultParameterNameDiscoverer();
 
-    private Map<String, InvokeParam> cacheKeyInvokeParamMap = new ConcurrentHashMap<>();
+    private Map<String, Map<String, InvokeParam>> cacheTypeCacheKeyInvokeParamMapMap = new ConcurrentHashMap<>();
 
-
-    public String generateKey(String nameSpace, String name, ProceedingJoinPoint point) throws IOException, NoSuchMethodException {
+    public String generateKey(String cacheType, String nameSpace, String name, ProceedingJoinPoint point) throws IOException, NoSuchMethodException {
 
         Class<?> classTarget = point.getTarget().getClass();
         String fullPathClassName = classTarget.getTypeName();
@@ -78,7 +77,9 @@ public class CaffeineKeyGenerator {
 
         String cacheKey = objectMapper.writeValueAsString(cacheKeyMap);
 
-        cacheKeyInvokeParamMap.put(cacheKey, new InvokeParam(point.getTarget(), objMethod, args));
+        Map<String, InvokeParam> cacheKeyInvokeParamMap = cacheTypeCacheKeyInvokeParamMapMap.getOrDefault(cacheType, new ConcurrentHashMap<>());
+        cacheKeyInvokeParamMap.putIfAbsent(cacheKey, new InvokeParam(point.getTarget(), objMethod, args));
+        cacheTypeCacheKeyInvokeParamMapMap.put(cacheType, cacheKeyInvokeParamMap);
 
         return cacheKey;
     }

@@ -8,7 +8,7 @@ import halo.mzh.cache.caffeine.CaffeineCacheLoader;
 import halo.mzh.cache.caffeine.CaffeineRemovalListener;
 import halo.mzh.cache.serializer.support.KryoSerializerSupport;
 import halo.mzh.cache.starter.caffeine.config.properties.CaffeineCacheProperties;
-import halo.mzh.cache.starter.caffeine.generator.CaffeineKeyGenerator;
+import halo.mzh.cache.spring.support.generator.SpringCacheKeyGenerateSupport;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,7 +34,7 @@ public class CaffeineCacheFactory {
     private CaffeineCacheProperties caffeineCacheProperties;
 
     @Autowired
-    private CaffeineKeyGenerator caffeineKeyGenerator;
+    private SpringCacheKeyGenerateSupport caffeineKeyGenerator;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -58,7 +59,8 @@ public class CaffeineCacheFactory {
                     @Async
                     public void onRemoval(@Nullable String key, byte @Nullable [] bytes, @NonNull RemovalCause removalCause) {
                         if (removalCause.name().equalsIgnoreCase(RemovalCause.EXPIRED.name()) || removalCause.name().equalsIgnoreCase(RemovalCause.EXPLICIT.name())) {
-                            caffeineKeyGenerator.getCacheKeyInvokeParamMap().remove(key);
+                            Map<String, SpringCacheKeyGenerateSupport.InvokeParam> cacheKeyInvokeParamMap = caffeineKeyGenerator.getCacheTypeCacheKeyInvokeParamMapMap().get(CaffeineCacheProperties.PREFIX);
+                            cacheKeyInvokeParamMap.remove(key);
                             log.warn("键: {}, 移除执行参数invokeParam", key);
                         }
                         Object value = KryoSerializerSupport.instance().decode(bytes);
@@ -67,7 +69,7 @@ public class CaffeineCacheFactory {
                 }).build(new CaffeineCacheLoader<String, byte[]>() {
                     @Override
                     public byte @Nullable [] load(@NonNull String key) throws Exception {
-                        CaffeineKeyGenerator.InvokeParam invokeParam = caffeineKeyGenerator.getCacheKeyInvokeParamMap().get(key);
+                        SpringCacheKeyGenerateSupport.InvokeParam invokeParam = caffeineKeyGenerator.getCacheTypeCacheKeyInvokeParamMapMap().get(CaffeineCacheProperties.PREFIX).get(key);
                         if (ObjectUtils.isEmpty(invokeParam)) {
                             log.warn("键: {}, 获取执行参数invokeParam失败", key);
                         }
