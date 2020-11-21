@@ -33,10 +33,10 @@ public class CaffeineCacheProperties {
     private long expireAfterAccess = -1;
 
     /**
-     * 最后一次写入后经过固定时间过期，默认不过期
+     * 最后一次写入后经过固定时间过期，默认3分钟
      * expireAfterWrite和expireAfterAccess同时存在时，以expireAfterWrite为准。
      */
-    private long expireAfterWrite = -1;
+    private long expireAfterWrite = 3 * 60;
 
     /**
      * 创建缓存或者最近一次更新缓存后经过固定的时间间隔，刷新缓存，默认1分钟
