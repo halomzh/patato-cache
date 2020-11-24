@@ -23,7 +23,7 @@ public class SpringSchedulingSupport {
     public static ScheduledTaskRegistrar getScheduledTaskRegistrar() {
 
         if (ObjectUtils.isEmpty(scheduledTaskRegistrar)) {
-            SpringSchedulingConfig springSchedulingConfig = SpringInvokeSupport.getApplicationContext().getBean(SpringSchedulingConfig.class);
+            SpringSchedulingConfig springSchedulingConfig = SpringPCacheSupport.getApplicationContext().getBean(SpringSchedulingConfig.class);
             scheduledTaskRegistrar = springSchedulingConfig.getTaskRegistrar();
         }
 
@@ -54,7 +54,7 @@ public class SpringSchedulingSupport {
 
         ScheduledTaskRegistrar scheduledTaskRegistrar = getScheduledTaskRegistrar();
         scheduledTaskRegistrar.setFixedDelayTasks(fixedDelayTaskMap);
-        ConfigurableApplicationContext applicationContext = SpringInvokeSupport.getConfigurableApplicationContext();
+        ConfigurableApplicationContext applicationContext = SpringPCacheSupport.getConfigurableApplicationContext();
 
         applicationContext.refresh();
 

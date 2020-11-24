@@ -10,6 +10,8 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class PatatoCacheSpringSupportException extends RuntimeException {
+
+    private static final long serialVersionUID = -6199666474403507816L;
     
     private String message;
     private int code = 500;

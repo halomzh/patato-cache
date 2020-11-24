@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationEvent;
  * @author shoufeng
  */
 
-public class CaffeinePutEvent<V> extends ApplicationEvent {
+public class CaffeinePutEvent extends ApplicationEvent {
 
 
     public CaffeinePutEvent(CaffeinePutEventInfo caffeinePutHolder) {

@@ -1,11 +1,16 @@
-package halo.mzh.cache.spring.support.generator;
+package halo.mzh.cache.spring.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
@@ -16,6 +21,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +34,19 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 @Slf4j
 @Component
-public class SpringCacheKeyGenerateSupport {
+public class SpringPCacheSupport implements ApplicationContextAware {
+
+    @Getter
+    private static ApplicationContext applicationContext;
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        SpringPCacheSupport.applicationContext = applicationContext;
+    }
+
+    public static ConfigurableApplicationContext getConfigurableApplicationContext() {
+        return (ConfigurableApplicationContext) applicationContext;
+    }
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -82,6 +100,24 @@ public class SpringCacheKeyGenerateSupport {
         cacheTypeCacheKeyInvokeParamMapMap.put(cacheType, cacheKeyInvokeParamMap);
 
         return cacheKey;
+    }
+
+    public Object invokeByParam(SpringPCacheSupport.InvokeParam invokeParam, String key) throws InvocationTargetException, IllegalAccessException {
+
+        if (ObjectUtils.isEmpty(invokeParam)) {
+            log.warn("键: {}, 获取执行参数invokeParam失败", key);
+        }
+        Object obj = invokeParam.getObject();
+        Method objMethod = invokeParam.getObjMethod();
+        Object[] args = invokeParam.getArgs();
+
+        return objMethod.invoke(obj, args);
+    }
+
+    public Object invokeByKeyAndCachePrefix(String prefix, String key) throws InvocationTargetException, IllegalAccessException {
+        SpringPCacheSupport.InvokeParam invokeParam = getCacheTypeCacheKeyInvokeParamMapMap().get(prefix).get(key);
+
+        return invokeByParam(invokeParam, key);
     }
 
     @Data
