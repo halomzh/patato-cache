@@ -68,14 +68,7 @@ public class CaffeineCacheFactory {
                     @Override
                     public byte @Nullable [] load(@NonNull String key) throws Exception {
                         Object result = springPCacheSupport.invokeByKeyAndCachePrefix(CaffeineCacheProperties.PREFIX, key);
-//                        SpringPCacheSupport.InvokeParam invokeParam = springPCacheSupport.getCacheTypeCacheKeyInvokeParamMapMap().get(CaffeineCacheProperties.PREFIX).get(key);
-//                        if (ObjectUtils.isEmpty(invokeParam)) {
-//                            log.warn("键: {}, 获取执行参数invokeParam失败", key);
-//                        }
-//                        Object obj = invokeParam.getObject();
-//                        Method objMethod = invokeParam.getObjMethod();
-//                        Object[] args = invokeParam.getArgs();
-//                        Object result = objMethod.invoke(obj, args);
+
                         return KryoSerializerSupport.instance().encode(result);
                     }
 
